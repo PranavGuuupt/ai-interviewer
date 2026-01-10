@@ -8,9 +8,27 @@ import {
     FileCheck,
     Clock,
     AlertCircle,
+    ArrowUpRight,
 } from "lucide-react";
 import axios from "axios";
 import ReportCard from "./ReportCard";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs) {
+    return twMerge(clsx(inputs));
+}
+
+const GlassPanel = ({ children, className }) => (
+    <div
+        className={cn(
+            "bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl",
+            className
+        )}
+    >
+        {children}
+    </div>
+);
 
 const InterviewRoom = ({
     resumeData,
@@ -42,11 +60,7 @@ const InterviewRoom = ({
             greeting += `Today, we'll be interviewing you for the role of ${jobRole}. `;
             greeting += `This is a ${difficulty} difficulty interview. `;
         } else if (resumeData) {
-            greeting += `I've reviewed your resume and I'm excited to discuss your skills in ${resumeData.technicalSkills
-                ?.slice(0, 3)
-                .join(", ")}${
-                resumeData.technicalSkills?.length > 3 ? ", and more" : ""
-            }. `;
+            greeting += `I've reviewed your resume and I'm excited to discuss your skills. `;
         }
 
         greeting += "Let's begin!";
@@ -68,11 +82,10 @@ const InterviewRoom = ({
     // Parse duration and start timer
     useEffect(() => {
         if (duration) {
-            // Extract minutes from duration string (e.g., "Short (15 min)" -> 15)
             const match = duration.match(/(\d+)/);
             if (match) {
                 const minutes = parseInt(match[1]);
-                setTimeRemaining(minutes * 60); // Convert to seconds
+                setTimeRemaining(minutes * 60);
                 console.log(`⏱️ Timer set to ${minutes} minutes`);
             }
         }
@@ -84,14 +97,12 @@ const InterviewRoom = ({
             return;
         }
 
-        // Show warning at 1 minute
         if (timeRemaining === 60 && !showWarning) {
             setShowWarning(true);
             setError("⏰ 1 minute left! Wrap up your answer.");
             setTimeout(() => setError(null), 5000);
         }
 
-        // Auto-end at 0
         if (timeRemaining === 0) {
             console.log("⏰ Timer expired - auto-ending interview");
             handleEndInterview();
@@ -109,7 +120,6 @@ const InterviewRoom = ({
         };
     }, [timeRemaining, showReportCard]);
 
-    // Format time as MM:SS
     const formatTime = (seconds) => {
         if (seconds === null) return null;
         const mins = Math.floor(seconds / 60);
@@ -163,7 +173,6 @@ const InterviewRoom = ({
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            // Stop all tracks to release microphone
             mediaRecorderRef.current.stream
                 .getTracks()
                 .forEach((track) => track.stop());
@@ -173,23 +182,19 @@ const InterviewRoom = ({
     const processAudio = async (audioBlob) => {
         setIsProcessing(true);
 
-        // Create form data
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
 
-        // Build history for context
         const history = messages.map((msg) => ({
             role: msg.role === "assistant" ? "assistant" : "user",
             content: msg.content,
         }));
         formData.append("history", JSON.stringify(history));
 
-        // Add resume context if available
         if (resumeData) {
             formData.append("context", JSON.stringify(resumeData));
         }
 
-        // Add job context if available
         if (jobRole) {
             formData.append(
                 "jobContext",
@@ -215,7 +220,6 @@ const InterviewRoom = ({
 
             const { userTranscript, aiTranscript, audioUrl } = response.data;
 
-            // Update messages
             setMessages((prev) => [
                 ...prev,
                 {
@@ -230,7 +234,6 @@ const InterviewRoom = ({
                 },
             ]);
 
-            // Play audio
             if (audioUrl) {
                 setIsPlaying(true);
                 const audio = new Audio(audioUrl);
@@ -246,7 +249,6 @@ const InterviewRoom = ({
     };
 
     const handleEndInterview = async () => {
-        // Filter out the initial greeting to avoid analyzing it
         const conversationHistory = messages.slice(1).map((msg) => ({
             role: msg.role === "assistant" ? "assistant" : "user",
             content: msg.content,
@@ -271,7 +273,6 @@ const InterviewRoom = ({
                 duration: duration || "N/A",
             };
 
-            // Add job context for AI analysis if available
             if (jobRole) {
                 payload.jobContext = {
                     roleTitle: jobRole,
@@ -322,63 +323,58 @@ const InterviewRoom = ({
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto p-4 gap-6">
-            {/* Header */}
-            <div className="bg-gray-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-                            AI Technical Interview
-                        </h2>
-                        <p className="text-gray-400">
-                            Professional assessment session. Speak clearly and
-                            concisely.
-                        </p>
-                    </div>
+        <div className="flex flex-col h-[calc(100vh-10rem)] max-w-5xl mx-auto gap-4 relative">
+            {/* Header Controls */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-medium text-white tracking-tight">
+                        Live Session
+                    </h2>
+                    <p className="text-white/40 text-sm">
+                        Speak clearly for best results.
+                    </p>
+                </div>
 
-                    {/* --- INSERT THIS TIMER CODE --- */}
+                <div className="flex items-center gap-4">
+                    {/* Timer */}
                     {timeRemaining !== null && (
                         <div
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-lg font-bold border ${
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-sm border transition-colors",
                                 timeRemaining < 120
-                                    ? "bg-red-500/20 text-red-400 border-red-500/30 animate-pulse"
-                                    : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            }`}
+                                    ? "bg-red-500/10 text-red-400 border-red-500/20 animate-pulse"
+                                    : "bg-white/5 text-white/60 border-white/10"
+                            )}
                         >
-                            <Clock className="w-5 h-5" />
+                            <Clock className="w-4 h-4" />
                             {formatTime(timeRemaining)}
                         </div>
                     )}
-                    {/* ----------------------------- */}
 
                     <button
                         onClick={handleEndInterview}
                         disabled={
                             isAnalyzing || isProcessing || messages.length <= 1
                         }
-                        className={`
-                            px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all
-                            ${
-                                isAnalyzing
-                                    ? "bg-gray-700 cursor-not-allowed opacity-50"
-                                    : "bg-gradient-to-r from-green-500 to-blue-600 hover:shadow-lg hover:shadow-green-500/50 hover:scale-105"
-                            }
-                            ${
-                                messages.length <= 1
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }
-                        `}
+                        className={cn(
+                            "px-5 py-2 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 transition-all",
+                            isAnalyzing
+                                ? "bg-white/10 cursor-not-allowed opacity-50"
+                                : "bg-[#ccff00] text-black hover:bg-[#b3e600] shadow-[0_0_15px_rgba(204,255,0,0.3)] hover:shadow-[0_0_20px_rgba(204,255,0,0.5)]",
+                            messages.length <= 1
+                                ? "opacity-30 cursor-not-allowed"
+                                : ""
+                        )}
                     >
                         {isAnalyzing ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Analyzing...
+                                Processing...
                             </>
                         ) : (
                             <>
-                                <FileCheck className="w-4 h-4" />
                                 End Interview
+                                <ArrowUpRight className="w-4 h-4" />
                             </>
                         )}
                     </button>
@@ -386,124 +382,102 @@ const InterviewRoom = ({
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 bg-gray-800/30 rounded-2xl p-6 overflow-y-auto border border-gray-700/50 space-y-4 shadow-inner">
-                {messages.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className={`flex ${
-                            msg.role === "user"
-                                ? "justify-end"
-                                : "justify-start"
-                        }`}
-                    >
+            <GlassPanel className="flex-1 rounded-[2rem] p-6 overflow-hidden flex flex-col relative">
+                <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                    {messages.map((msg, idx) => (
                         <div
-                            className={`max-w-[80%] rounded-2xl px-6 py-4 ${
+                            key={idx}
+                            className={`flex ${
                                 msg.role === "user"
-                                    ? "bg-blue-600/20 text-blue-100 border border-blue-500/30 rounded-tr-sm"
-                                    : "bg-gray-700/40 text-gray-100 border border-gray-600/30 rounded-tl-sm"
+                                    ? "justify-end"
+                                    : "justify-start"
                             }`}
                         >
-                            <div className="flex items-center gap-2 mb-1 opacity-50 text-xs uppercase tracking-wider font-semibold">
-                                {msg.role === "user" ? "You" : "Interviewer"}
-                                <span className="text-[10px] font-normal lowercase opacity-75">
-                                    {new Date(msg.timestamp).toLocaleTimeString(
-                                        [],
-                                        { hour: "2-digit", minute: "2-digit" }
-                                    )}
+                            <div
+                                className={cn(
+                                    "max-w-[80%] rounded-2xl px-6 py-4 border text-sm leading-relaxed shadow-lg",
+                                    msg.role === "user"
+                                        ? "bg-[#ccff00]/10 text-[#ccff00] border-[#ccff00]/20 rounded-tr-sm backdrop-blur-md"
+                                        : "bg-white/5 text-white/90 border-white/5 rounded-tl-sm backdrop-blur-md"
+                                )}
+                            >
+                                <div className="flex items-center gap-2 mb-2 opacity-50 text-[10px] uppercase tracking-widest font-mono">
+                                    {msg.role === "user"
+                                        ? "You"
+                                        : "Interviewer"}
+                                </div>
+                                <p>{msg.content}</p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {isProcessing && (
+                        <div className="flex justify-start">
+                            <div className="bg-white/5 rounded-2xl px-6 py-4 rounded-tl-sm border border-white/5 flex items-center gap-3">
+                                <Loader2 className="w-4 h-4 animate-spin text-[#ccff00]" />
+                                <span className="text-white/40 text-xs font-mono uppercase tracking-wider">
+                                    Analyzing Audio...
                                 </span>
                             </div>
-                            <p className="leading-relaxed">{msg.content}</p>
                         </div>
-                    </div>
-                ))}
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
 
-                {isProcessing && (
-                    <div className="flex justify-start">
-                        <div className="bg-gray-700/40 rounded-2xl px-6 py-4 rounded-tl-sm border border-gray-600/30 flex items-center gap-3">
-                            <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                            <span className="text-gray-400 text-sm animate-pulse">
-                                Analyzing response...
-                            </span>
-                        </div>
-                    </div>
-                )}
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Controls Area */}
-            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-                {error && (
-                    <div className="absolute top-4 bg-red-500/10 text-red-400 px-4 py-2 rounded-lg text-sm border border-red-500/20">
-                        {error}
-                    </div>
-                )}
-
-                <div className="flex items-center gap-6">
+                {/* Microphone Controls */}
+                <div className="pt-6 mt-4 border-t border-white/5 flex items-center justify-center gap-8">
                     <div
-                        className={`transition-all duration-300 ${
+                        className={cn(
+                            "w-12 h-12 flex items-center justify-center rounded-full border transition-all duration-300",
                             isPlaying
-                                ? "opacity-100 scale-110"
-                                : "opacity-40 scale-100"
-                        }`}
+                                ? "bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00] scale-110 shadow-[0_0_20px_rgba(204,255,0,0.2)]"
+                                : "bg-transparent border-white/5 text-white/20"
+                        )}
                     >
-                        <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                            <Volume2
-                                className={`w-6 h-6 text-purple-400 ${
-                                    isPlaying ? "animate-pulse" : ""
-                                }`}
-                            />
-                        </div>
+                        <Volume2 className="w-5 h-5" />
                     </div>
                     <button
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isProcessing}
-                        className={`
-              relative group w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300
-              ${
-                  isProcessing
-                      ? "bg-gray-700 cursor-not-allowed opacity-50"
-                      : isRecording
-                      ? "bg-red-500/10 hover:bg-red-500/20 border-2 border-red-500"
-                      : "bg-blue-500/10 hover:bg-blue-500/20 border-2 border-blue-500 hover:scale-105 hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.5)]"
-              }
-            `}
-                    >
-                        {/* Ripple effect when recording */}
-                        {isRecording && (
-                            <span className="absolute inset-0 rounded-full bg-red-500/20 animate-ping"></span>
+                        className={cn(
+                            "relative group w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 border-2",
+                            isProcessing
+                                ? "border-white/10 text-white/20 cursor-not-allowed bg-white/5"
+                                : isRecording
+                                ? "border-red-500 bg-red-500/10 text-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)] animate-pulse"
+                                : "border-[#ccff00] bg-[#ccff00]/5 text-[#ccff00] hover:bg-[#ccff00]/10 hover:scale-105 hover:shadow-[0_0_30px_rgba(204,255,0,0.3)]"
                         )}
-
+                    >
                         {isRecording ? (
-                            <Square className="w-8 h-8 text-red-500 fill-current" />
+                            <Square className="w-8 h-8 fill-current" />
                         ) : (
-                            <Mic
-                                className={`w-10 h-10 ${
-                                    isProcessing
-                                        ? "text-gray-400"
-                                        : "text-blue-500"
-                                }`}
-                            />
+                            <Mic className="w-8 h-8" />
                         )}
                     </button>
-                    <div className="w-12 h-12 opacity-0" />{" "}
-                    {/* Spacer for symmetry */}
+                    <div className="w-12 h-12" /> {/* Spacer */}
                 </div>
+            </GlassPanel>
 
-                <p className="text-sm font-medium text-gray-400">
-                    {isRecording ? (
-                        <span className="text-red-400 animate-pulse flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                            Recording... Tap to sent
-                        </span>
-                    ) : isProcessing ? (
-                        <span className="text-purple-400">
-                            Processing audio...
-                        </span>
-                    ) : (
-                        "Tap microphone to answer"
-                    )}
-                </p>
+            <div className="text-center">
+                {isRecording ? (
+                    <span className="text-red-400 text-xs font-mono uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                        Recording
+                    </span>
+                ) : (
+                    <span className="text-white/30 text-xs font-mono uppercase tracking-widest">
+                        {isProcessing
+                            ? "Processing Response..."
+                            : "Tap Microphone to Speak"}
+                    </span>
+                )}
             </div>
+
+            {error && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500/10 text-red-400 px-4 py-2 rounded-lg text-sm border border-red-500/20 backdrop-blur-md">
+                    {error}
+                </div>
+            )}
         </div>
     );
 };
