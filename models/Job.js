@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const JobSchema = new mongoose.Schema({
+    recruiterId: {
+        type: String,
+        required: true,
+        index: true
+    },
     roleTitle: {
         type: String,
         required: true,
@@ -30,3 +35,4 @@ const JobSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Job', JobSchema);
+

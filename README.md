@@ -1,255 +1,196 @@
-# AI Interviewer - Backend
+# AI Interviewer 🎤
 
-A MERN stack SaaS application for AI-powered interviews with voice generation using edge-tts.
+A full-stack AI-powered interview platform built with the MERN stack, featuring voice synthesis, real-time AI conversations, and comprehensive recruiter analytics.
+
+## ✨ Features
+
+### For Candidates
+- 📄 **Resume Upload** - AI analyzes your resume for context
+- 🎙️ **Voice Conversations** - Natural AI-powered interviews
+- 📊 **Instant Feedback** - Detailed performance report after each interview
+- ⏱️ **Flexible Duration** - Timer-based interviews (1-120 minutes)
+
+### For Recruiters
+- 🔐 **Secure Authentication** - Powered by Clerk (Google, Email)
+- 📝 **Job Management** - Create, edit, delete job postings
+- 🔗 **Magic Links** - Unique interview links for each position
+- 📈 **Analytics Dashboard** - Track candidate performance
+- 📥 **Report Downloads** - Export candidate reports
 
 ## 🏗️ Tech Stack
 
--   **Backend**: Node.js with Express
--   **Database**: MongoDB with Mongoose
--   **Voice Generation**: Python edge-tts library
--   **Dependencies**: CORS, dotenv, Multer, Axios
+| Layer | Technology |
+|-------|------------|
+| Frontend | React + Vite + TailwindCSS |
+| Backend | Node.js + Express |
+| Database | MongoDB + Mongoose |
+| Auth | [Clerk](https://clerk.com) |
+| AI | Groq API (LLaMA) |
+| Voice | Python edge-tts |
 
 ## 📁 Project Structure
 
 ```
-AI-INTERVIEWER/
-├── server.js                 # Main Express server
-├── package.json              # Node.js dependencies
-├── .env                      # Environment variables (create from .env.example)
-├── .env.example              # Environment variables template
+ai-interviewer/
+├── server.js                 # Express server
+├── models/
+│   ├── Job.js               # Job postings (with recruiterId)
+│   └── Interview.js         # Interview results (with jobId)
+├── controllers/
+│   ├── aiController.js      # AI/Groq integration
+│   └── jobController.js     # Job CRUD operations
+├── routes/
+│   ├── jobs.js              # Job API routes
+│   ├── interview.js         # Interview API routes
+│   └── resume.js            # Resume parsing routes
+├── client/                   # React frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── Dashboard.jsx      # Recruiter dashboard
+│   │   │   ├── CandidateFlow.jsx  # Interview flow
+│   │   │   ├── RecruiterJobPage.jsx
+│   │   │   ├── SignInPage.jsx     # Clerk auth
+│   │   │   └── SignUpPage.jsx
+│   │   └── components/
+│   │       ├── InterviewRoom.jsx
+│   │       ├── ReportCard.jsx
+│   │       └── ResumeUpload.jsx
+│   └── .env                  # Frontend env (VITE_CLERK_PUBLISHABLE_KEY)
 ├── python-scripts/
-│   └── tts.py               # Edge-TTS Python script
-├── utils/
-│   └── voiceHandler.js      # Voice generation utility
-├── public/
-│   └── audio/               # Generated audio files
-└── README.md
+│   └── tts.py               # Voice synthesis
+└── .env                      # Backend env
 ```
 
-## 🚀 Setup Instructions
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js v18+
+- MongoDB (local or Atlas)
+- Python 3.7+
+- Clerk account ([clerk.com](https://clerk.com))
+- Groq API key ([console.groq.com](https://console.groq.com))
 
--   Node.js (v14 or higher)
--   MongoDB (local or Atlas)
--   Python 3.7+
--   pip (Python package manager)
-
-### Step 1: Install Node.js Dependencies
+### 1. Clone & Install
 
 ```bash
+# Clone repo
+git clone https://github.com/Ayush-Pokhariya-07/ai-interviewer.git
+cd ai-interviewer
+
+# Install backend dependencies
 npm install
+
+# Install frontend dependencies
+cd client && npm install
 ```
 
-### Step 2: Install Python Dependencies
+### 2. Setup Python TTS
 
 ```bash
 pip install edge-tts
+# or: pip3 install edge-tts
 ```
 
-Or if you're using Python 3:
+### 3. Configure Environment
 
-```bash
-pip3 install edge-tts
-```
-
-### Step 3: Configure Environment Variables
-
-Create a `.env` file by copying `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and update the values:
-
+**Backend `.env`:**
 ```env
-MONGODB_URI=mongodb://localhost:27017/ai-interviewer
+MONGODB_URI=mongodb+srv://your_connection_string
 PORT=5000
-PYTHON_EXECUTABLE=python
+GROQ_API_KEY=gsk_your_key_here
+CLERK_SECRET_KEY=sk_test_your_key
+PYTHON_EXECUTABLE=python3
 ```
 
-**Note**: For Windows, use `python` or `py`. For Linux/Mac, use `python3`.
+**Frontend `client/.env`:**
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key
+```
 
-### Step 4: Start MongoDB
-
-Make sure MongoDB is running on your system:
+### 4. Start Development
 
 ```bash
-# For local MongoDB
-mongod
+# Terminal 1: Backend
+npm run dev
+
+# Terminal 2: Frontend
+cd client && npm run dev
 ```
 
-Or use MongoDB Atlas connection string in your `.env` file.
+Visit `http://localhost:5173`
 
-### Step 6: Start the Frontend
+## 🔐 Authentication
 
-1. Navigate to the client directory:
+Routes are protected based on user type:
 
+| Route | Auth Required | User Type |
+|-------|---------------|-----------|
+| `/` | ❌ | Public |
+| `/start` | ❌ | Candidates |
+| `/interview/:jobId` | ❌ | Candidates |
+| `/sign-in` | ❌ | Public |
+| `/sign-up` | ❌ | Public |
+| `/dashboard` | ✅ | Recruiters |
+| `/recruiter` | ✅ | Recruiters |
+
+## 📡 API Endpoints
+
+### Jobs
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/jobs/all` | Get recruiter's jobs |
+| POST | `/api/jobs/create` | Create new job |
+| GET | `/api/jobs/:id` | Get job details |
+| PUT | `/api/jobs/:id` | Update job |
+| DELETE | `/api/jobs/:id` | Delete job + interviews |
+| GET | `/api/jobs/:id/interviews` | Get job's candidates |
+
+### Interviews
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/interview/process` | Process interview audio |
+| POST | `/api/interview/analyze` | Analyze & save interview |
+| GET | `/api/interview/all` | Get all interviews |
+
+### Resume
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/resume/parse` | Parse uploaded resume |
+
+## 🧪 Testing
+
+```bash
+# Backend health check
+curl http://localhost:5000/api/jobs/check/health
+
+# Frontend
+open http://localhost:5173
+```
+
+## 📦 Deployment
+
+### Vercel (Frontend)
 ```bash
 cd client
+vercel
 ```
 
-2. Install dependencies:
+### Railway/Render (Backend)
+Ensure environment variables are set in the dashboard.
 
-```bash
-npm install
-```
+## 🤝 Contributing
 
-3. Start the development server:
-
-```bash
-npm run dev
-```
-
-The application will launch on `http://localhost:5173`.
-
-## 🎤 Voice Generation API
-
-### Generate Speech
-
-**Endpoint**: `POST /api/voice/generate` (to be implemented)
-
-**Request Body**:
-
-```json
-{
-    "text": "Hello, welcome to your AI interview"
-}
-```
-
-**Response**:
-
-```json
-{
-    "success": true,
-    "message": "Speech generated successfully",
-    "data": {
-        "filename": "speech_20231222_123456_789012.mp3",
-        "audioUrl": "/audio/speech_20231222_123456_789012.mp3"
-    }
-}
-```
-
-### Using Voice Handler Directly
-
-```javascript
-const { generateSpeech } = require("./utils/voiceHandler");
-
-// Generate speech
-try {
-    const result = await generateSpeech("Hello, this is a test");
-    console.log("Audio file:", result.filename);
-    console.log("Audio URL:", result.audioUrl);
-} catch (error) {
-    console.error("Error:", error.message);
-}
-```
-
-## 🧪 Testing Voice Generation
-
-You can test the Python script directly:
-
-```bash
-python python-scripts/tts.py "Hello, this is a test message"
-```
-
-This will generate an MP3 file in `public/audio/`.
-
-## 📝 Available Voices
-
-The default voice is **en-US-AriaNeural** (high-quality female voice).
-
-Other available voices:
-
--   `en-US-GuyNeural` - Male voice
--   `en-US-JennyNeural` - Female voice
--   `en-GB-RyanNeural` - British male voice
--   `en-GB-SoniaNeural` - British female voice
-
-To change the voice, edit the `VOICE` constant in `python-scripts/tts.py`.
-
-## 🔧 Development
-
-### Adding Routes
-
-Create route files in a `routes/` directory and import them in `server.js`:
-
-```javascript
-app.use("/api/voice", require("./routes/voice"));
-app.use("/api/interviews", require("./routes/interviews"));
-```
-
-### Adding Models
-
-Create Mongoose models in a `models/` directory:
-
-```javascript
-const mongoose = require("mongoose");
-
-const InterviewSchema = new mongoose.Schema({
-    // your schema here
-});
-
-module.exports = mongoose.model("Interview", InterviewSchema);
-```
-
-## 🐛 Troubleshooting
-
-### Python not found
-
--   Make sure Python is installed and in your PATH
--   Update `PYTHON_EXECUTABLE` in `.env` to the correct Python command
-
-### edge-tts not installed
-
-```bash
-pip install edge-tts
-```
-
-### MongoDB connection failed
-
--   Ensure MongoDB is running
--   Check your `MONGODB_URI` in `.env`
-
-### Audio files not accessible
-
--   Check that `public/audio/` directory exists
--   Ensure the Express static middleware is configured correctly
-
-## 📝 Recent Changes (v1.1.0)
-
-### ✨ New Features
-
--   **Variable Interview Timer**: Recruiters can now set any duration between 1-120 minutes (instead of fixed 15/30/60 min options)
--   **Auto-End Interview**: When timer expires, the AI interviewer says goodbye and automatically shows the report card
--   **Interview Dashboard**: Added `/api/interview/all` endpoint to fetch all completed interviews
-
-### 🐛 Bug Fixes
-
--   Fixed: Duration was not being saved when creating jobs
--   Fixed: Duration was not returned in job API response
--   Fixed: jobContext was not passed to AI during interviews
--   Fixed: Typo in recording indicator ("sent" → "send")
-
-### 🔧 Improvements
-
--   Removed deprecated Mongoose connection options (`useNewUrlParser`, `useUnifiedTopology`)
--   Replaced exposed API key in `.env.example` with placeholder
--   Added better timer parsing to handle both numeric and string durations
--   Added 1-minute warning before interview ends
-
-### 📁 Files Modified
-
-| File | Changes |
-|------|---------|
-| `routes/interview.js` | Added `/all` route, fixed jobContext parsing |
-| `server.js` | Removed deprecated Mongoose options |
-| `controllers/jobController.js` | Added duration to job creation/response |
-| `models/Job.js` | Changed duration to Number type (1-120) |
-| `client/src/pages/RecruiterJobPage.jsx` | Variable duration input |
-| `client/src/components/InterviewRoom.jsx` | Timer fixes, goodbye message |
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ## 📄 License
 
-ISC
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Built with ❤️ by [Ayush Pokhariya](https://github.com/Ayush-Pokhariya-07)

@@ -56,13 +56,10 @@ Adjust your questions and expectations based on this ${jobContext.difficulty} di
 
         // Add resume context if provided
         if (context) {
-            const contextPrefix = `The candidate is ${
-                context.fullName
-            }. Skills: ${
-                context.technicalSkills?.join(", ") || "Not specified"
-            }. Focus questions on: ${
-                context.mostImpressiveProject || "their experience"
-            }. `;
+            const contextPrefix = `The candidate is ${context.fullName
+                }. Skills: ${context.technicalSkills?.join(", ") || "Not specified"
+                }. Focus questions on: ${context.mostImpressiveProject || "their experience"
+                }. `;
             systemPrompt = contextPrefix + systemPrompt;
             console.log("📋 Using resume-aware context for interview");
         }
@@ -101,8 +98,7 @@ const analyzeInterview = async (conversationHistory, jobContext = null) => {
         const transcript = conversationHistory
             .map(
                 (msg) =>
-                    `${msg.role === "user" ? "Candidate" : "Interviewer"}: ${
-                        msg.content
+                    `${msg.role === "user" ? "Candidate" : "Interviewer"}: ${msg.content
                     }`
             )
             .join("\n\n");
@@ -316,6 +312,7 @@ const analyzeInterviewMiddleware = async (req, res) => {
             jobRole,
             difficulty,
             duration,
+            jobId,
         } = req.body;
 
         if (!history || !Array.isArray(history) || history.length === 0) {
@@ -340,6 +337,7 @@ const analyzeInterviewMiddleware = async (req, res) => {
             const Interview = require("../models/Interview");
             const savedInterview = await Interview.create({
                 candidateName: candidateName || "Anonymous",
+                jobId: jobId || null,
                 jobRole: jobRole || "Practice Interview",
                 difficulty: difficulty || "N/A",
                 duration: duration || "N/A",

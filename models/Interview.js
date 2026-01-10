@@ -5,6 +5,11 @@ const InterviewSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    jobId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Job',
+        default: null,
+    },
     jobRole: {
         type: String,
         default: "Practice Interview",
